@@ -30,6 +30,8 @@
         hostname: "{{ item.network_interfaces[0].association.public_ip }}"
         groupname: launched
       loop: "{{ ec2_instance_result.instances }}"
+      when: "'association' in item.network_interfaces[0] and item.network_interfaces[0].association.public_ip is defined"
+
 
 
     - name: Wait for SSH connection
