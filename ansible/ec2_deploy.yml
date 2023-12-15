@@ -5,10 +5,6 @@
     - 4IT572_ansible/ansible/group_vars/all/aws.yml  # Include your vault file here
 
   tasks:
-    - name: Generate unique deployment tag
-      set_fact:
-        deployment_tag: "{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
-
     - name: Launch EC2 instance
       ec2_instance:
         instance_type: t2.large
@@ -21,13 +17,12 @@
         wait: yes
         count: 1
         security_group: eshop
+        tags:
+          Name: "YourInstanceName"
+          DeploymentTag: "YourDeploymentTag"
         aws_access_key: "{{ access_key }}"
         aws_secret_key: "{{ secret_key }}"
         security_token: "{{ session_token }}"
-        tag_specifications:
-          - resource_type: instance
-            tags:
-              Deployment: "{{ deployment_tag }}"
       register: ec2_instance_result
 
     - name: Add instance host to group
