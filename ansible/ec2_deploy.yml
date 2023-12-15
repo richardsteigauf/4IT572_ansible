@@ -97,6 +97,9 @@
   tasks:
     - name: Gather facts of all instances
       ec2_instance_info:
+        aws_access_key: "{{ access_key }}"
+        aws_secret_key: "{{ secret_key }}"
+        security_token: "{{ session_token }}"
         region: "{{ region }}"
         filters:
           "tag:DeploymentTag": "DeployedAt*"  # Adjust the filter as needed
