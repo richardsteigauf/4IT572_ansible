@@ -64,12 +64,24 @@
       register: ec2_facts
 
 - name: Terminate old instances
-  community.aws.ec2_instance:
-    instance_ids: "{{ item.instance_id }}"
-    state: absent
-    aws_access_key: "{{ access_key }}"
-    aws_secret_key: "{{ secret_key }}"
-    security_token: "{{ session_token }}"
-  loop: "{{ ec2_facts.instances }}"
-  when: item.tags.Deployment != deployment_tag
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Find old instances
+      community.aws.ec2_instance_info:
+        filters:
+          "tag:YourCustomTag": "YourTagValue"  # Adjust the tag filter as needed
+        aws_access_key: "{{ access_key }}"
+        aws_secret_key: "{{ secret_key }}"
+        security_token: "{{ session_token }}"
+      register: old_instances
 
+    - name: Terminate old instances
+      community.aws.ec2_instance:
+        state: absent
+        instance_ids: "{{ item.instance_id }}"
+        aws_access_key: "{{ access_key }}"
+        aws_secret_key: "{{ secret_key }}"
+        security_token: "{{ session_token }}"
+      loop: "{{ old_instances.instances }}"
+      when: item.tags.Deployment != deployment_tag  # Ensure this condition matches your requirements
