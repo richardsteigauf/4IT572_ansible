@@ -1,6 +1,8 @@
 - name: Deploy to EC2
   hosts: localhost
   connection: local
+  vars_files:
+    - 4IT572_ansible/ansible/group_vars/all/aws.yml  # Include your vault file here
 
   tasks:
     - name: Launch EC2 instance
