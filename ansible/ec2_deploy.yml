@@ -5,6 +5,10 @@
     - 4IT572_ansible/ansible/group_vars/all/aws.yml  # Include your vault file here
 
   tasks:
+    - name: Generate unique deployment tag
+      set_fact:
+        deployment_tag: "{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+
     - name: Launch EC2 instance
       ec2_instance:
         instance_type: t2.large
@@ -20,6 +24,10 @@
         aws_access_key: "{{ access_key }}"
         aws_secret_key: "{{ secret_key }}"
         security_token: "{{ session_token }}"
+        tag_specifications:
+          - resource_type: instance
+            tags:
+              Deployment: "{{ deployment_tag }}"
       register: ec2_instance_result
 
     - name: Add instance host to group
@@ -36,43 +44,31 @@
         timeout: 300
       loop: "{{ ec2_instance_result.instances }}"
 
-- name: Configure  EC2
+- name: Configure EC2
   hosts: launched
   connection: ssh
-
-
   tasks:
-    - name: Install Git and Docker
-      yum:
-        name:
-          - docker
-          - git
-        state: latest
-        update_cache: yes
-      become: yes
-    - service:
-        name: docker
-        state: started
-        enabled: yes
-      become: yes
-    - name: Start Docker on startup
-      shell: systemctl enable docker
-      become: yes
-    - name: Set rights to docker
-      shell: usermod -a -G docker ec2-user
-      become: yes
-    - name: Get project files from git
-      git:
-        repo: 'https://github.com/richardsteigauf/4IT572_docker.git'
-        dest: ./app
-    - name: Build docker with eshop
-      shell: cd app && docker build -t myeshop:latest .
-      become: yes
-    - name: Run Docker with eshop
-      shell: docker run -p 80:3000 myeshop
-      async: 45
-      poll: 0
-      become: yes
-    - wait_for:
-        port:
-          80
+
+- name: Cleanup old EC2 instances
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Gather facts of all instances
+      ec2_instance_info:
+        filters:
+          "tag:Deployment": "eshop"
+          instance-state-name: [ "running", "stopped" ]
+        aws_access_key: "{{ access_key }}"
+        aws_secret_key: "{{ secret_key }}"
+        security_token: "{{ session_token }}"
+      register: ec2_facts
+
+    - name: Terminate old instances
+      ec2:
+        instance_ids: "{{ item.instance_id }}"
+        state: absent
+        aws_access_key: "{{ access_key }}"
+        aws_secret_key: "{{ secret_key }}"
+        security_token: "{{ session_token }}"
+      loop: "{{ ec2_facts.instances }}"
+      when: item.tags.Deployment != deployment_tag
