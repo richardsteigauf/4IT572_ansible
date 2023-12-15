@@ -5,11 +5,11 @@
   tasks:
     - name: Launch EC2 instance
       ec2_instance:
-        instance_type: t2.medium
-        image_id: ami-0230bd60aa48260c6
+        instance_type: t2.large
+        image_id: ami-0759f51a90924c166
         region: us-east-1
         key_name: devopss
-        vpc_subnet_id: subnet-06022f0aca52bf17a
+        vpc_subnet_id: subnet-0117b4f9fcf59e9cd
         network:
             assign_public_ip: yes
         wait: yes
