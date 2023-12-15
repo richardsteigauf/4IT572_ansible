@@ -1,10 +1,15 @@
 - name: Deploy to EC2
   hosts: localhost
+  gather_facts: yes
   connection: local
   vars_files:
     - 4IT572_ansible/ansible/group_vars/all/aws.yml  # Include your vault file here
 
   tasks:
+    - name: Generate unique deployment tag
+      set_fact:
+        deployment_tag: "DeployedAt{{ ansible_date_time.iso8601_micro }}"
+
     - name: Launch EC2 instance
       ec2_instance:
         instance_type: t2.large
@@ -13,16 +18,16 @@
         key_name: devopss
         vpc_subnet_id: subnet-0117b4f9fcf59e9cd
         network:
-            assign_public_ip: yes
+          assign_public_ip: yes
         wait: yes
         count: 1
         security_group: eshop
-        tags:
-          Name: "YourInstanceName"
-          DeploymentTag: "YourDeploymentTag"
         aws_access_key: "{{ access_key }}"
         aws_secret_key: "{{ secret_key }}"
         security_token: "{{ session_token }}"
+        tags:
+          Name: "YourInstanceName"
+          DeploymentTag: "{{ deployment_tag }}"
       register: ec2_instance_result
 
     - name: Add instance host to group
@@ -41,42 +46,68 @@
 
 - name: Configure EC2
   hosts: launched
-  connection: ssh
+  gather_facts: yes
+  become: true
+
   tasks:
+    - name: Install Git and Docker
+      yum:
+        name:
+          - docker
+          - git
+        state: latest
+        update_cache: yes
+
+    - name: Start Docker and enable on startup
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Set rights to docker
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
+    - name: Get project files from git
+      git:
+        repo: 'https://github.com/richardsteigauf/4IT572_docker.git'
+        dest: ./app
+
+    - name: Build docker with eshop
+      shell: cd app && docker build -t myeshop:latest .
+
+    - name: Run Docker with eshop
+      docker_container:
+        name: eshop
+        image: myeshop:latest
+        ports:
+          - "80:3000"
+        state: started
+        restart_policy: always
 
 - name: Cleanup old EC2 instances
   hosts: localhost
+  gather_facts: yes
   connection: local
+  vars:
+    region: us-east-1
+
   tasks:
     - name: Gather facts of all instances
       ec2_instance_info:
+        region: "{{ region }}"
         filters:
-          "tag:Deployment": "eshop"
-          instance-state-name: [ "running", "stopped" ]
-        aws_access_key: "{{ access_key }}"
-        aws_secret_key: "{{ secret_key }}"
-        security_token: "{{ session_token }}"
-      register: ec2_facts
+          "tag:DeploymentTag": "DeployedAt*"  # Adjust the filter as needed
+      register: ec2_instances
 
-- name: Terminate old instances
-  hosts: localhost
-  gather_facts: no
-  tasks:
-    - name: Find old instances
-      community.aws.ec2_instance_info:
-        filters:
-          "tag:YourCustomTag": "YourTagValue"  # Adjust the tag filter as needed
-        aws_access_key: "{{ access_key }}"
-        aws_secret_key: "{{ secret_key }}"
-        security_token: "{{ session_token }}"
-      register: old_instances
-
-    - name: Terminate old instances
-      community.aws.ec2_instance:
-        state: absent
+    - name: Terminate older instances
+      ec2_instance:
         instance_ids: "{{ item.instance_id }}"
-        aws_access_key: "{{ access_key }}"
-        aws_secret_key: "{{ secret_key }}"
-        security_token: "{{ session_token }}"
-      loop: "{{ old_instances.instances }}"
-      when: item.tags.Deployment != deployment_tag  # Ensure this condition matches your requirements
+        state: absent
+        region: "{{ region }}"
+      loop: "{{ ec2_instances.instances }}"
+      when: item.tags.DeploymentTag != deployment_tag
+      async: 0
+      poll: 0
