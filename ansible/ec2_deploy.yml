@@ -63,12 +63,13 @@
         security_token: "{{ session_token }}"
       register: ec2_facts
 
-    - name: Terminate old instances
-      ec2:
-        instance_ids: "{{ item.instance_id }}"
-        state: absent
-        aws_access_key: "{{ access_key }}"
-        aws_secret_key: "{{ secret_key }}"
-        security_token: "{{ session_token }}"
-      loop: "{{ ec2_facts.instances }}"
-      when: item.tags.Deployment != deployment_tag
+- name: Terminate old instances
+  community.aws.ec2_instance:
+    instance_ids: "{{ item.instance_id }}"
+    state: absent
+    aws_access_key: "{{ access_key }}"
+    aws_secret_key: "{{ secret_key }}"
+    security_token: "{{ session_token }}"
+  loop: "{{ ec2_facts.instances }}"
+  when: item.tags.Deployment != deployment_tag
+
