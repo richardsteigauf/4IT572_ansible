@@ -39,5 +39,5 @@ jobs:
           ansible-playbook /path/to/your/ansible/ec2_deploy.yml --vault-password-file vault_pass.txt --key-file /path/to/your/ssh_key.pem
           rm -f vault_pass.txt
       env:
-        VAULT_PASS: ${{ secrets.VAULT_PASS }}
+        VAULT_PASS: ${{ secrets.VAULT_PASS }} 
 
