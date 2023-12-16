@@ -3,7 +3,7 @@
   gather_facts: yes
   connection: local
   vars_files:
-    - 4IT572_ansible/ansible/group_vars/all/aws.yml  # Include your vault file here
+    - 4IT572_ansible/ansible/group_vars/all/aws.yml
 
   tasks:
     - name: Generate unique deployment tag
@@ -102,13 +102,16 @@
         security_token: "{{ session_token }}"
         region: "{{ region }}"
         filters:
-          "tag:DeploymentTag": "DeployedAt*"  # Adjust the filter as needed
+          "tag:DeploymentTag": "DeployedAt*"
       register: ec2_instances
 
     - name: Terminate older instances
       ec2_instance:
         instance_ids: "{{ item.instance_id }}"
         state: absent
+        aws_access_key: "{{ access_key }}"
+        aws_secret_key: "{{ secret_key }}"
+        security_token: "{{ session_token }}"
         region: "{{ region }}"
       loop: "{{ ec2_instances.instances }}"
       when: item.tags.DeploymentTag != deployment_tag
