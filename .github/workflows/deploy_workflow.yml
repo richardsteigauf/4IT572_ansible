@@ -26,11 +26,18 @@ jobs:
     - name: Install Ansible
       run: pip install ansible
 
-    - name: Run Ansible Playbook
+
+    - name: SSH and Run Ansible Playbook with Vault
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ec2-user
+        key: ${{ secrets.SSH_KEY }}
+        envs: VAULT_PASS
+        script: |
+          echo $VAULT_PASS > vault_pass.txt
+          ansible-playbook /path/to/your/ansible/ec2_deploy.yml --vault-password-file vault_pass.txt --key-file /path/to/your/ssh_key.pem
+          rm -f vault_pass.txt
       env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-        ANSIBLE_HOST_KEY_CHECKING: False
-      run: |
-        ansible-playbook 4IT572_ansible/ansible/ec2_deploy.yml -e ansible_ssh_private_key_file=ssh_key --user ec2-user
+        VAULT_PASS: ${{ secrets.VAULT_PASS }}
+
