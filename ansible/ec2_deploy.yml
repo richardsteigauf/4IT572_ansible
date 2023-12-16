@@ -109,11 +109,10 @@
       ec2_instance:
         instance_ids: "{{ item.instance_id }}"
         state: absent
-        aws_access_key: "{{ access_key }}"
-        aws_secret_key: "{{ secret_key }}"
-        security_token: "{{ session_token }}"
-        region: "{{ region }}"
+        region: us-east-1
       loop: "{{ ec2_instances.instances }}"
       when: item.tags.DeploymentTag != deployment_tag
-      async: 0
-      poll: 0
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ secret_key }}"
+        AWS_SESSION_TOKEN: "{{ session_token }}"
