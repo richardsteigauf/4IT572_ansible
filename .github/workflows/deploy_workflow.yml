@@ -1,4 +1,4 @@
-opsname: Deploy EShop on EC2
+name: Deploy EShop on EC2
 
 on:
   push:
