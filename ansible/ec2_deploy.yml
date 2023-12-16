@@ -105,7 +105,7 @@
           "tag:DeploymentTag": "DeployedAt*"
       register: ec2_instances
 
-    - name: Terminate older instances
+    - name: Terminate older instancess
       ec2_instance:
         instance_ids: "{{ item.instance_id }}"
         state: absent
