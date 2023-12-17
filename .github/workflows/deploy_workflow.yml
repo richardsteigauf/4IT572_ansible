@@ -26,10 +26,13 @@ jobs:
       - name: Install Ansible
         run: pip install ansible
 
-      - name: Run Ansible Playbook with Vault
+      - name: SSH into the instance and run Ansible playbook
         run: |
+          ssh -o StrictHostKeyChecking=no -i ssh_key ec2-user@${{ secrets.HOST }} << EOF
           echo "${{ secrets.VAULT_PASS }}" > vault_pass.txt
           ansible-playbook /4IT572_ansible/ansible/ec2_deploy.yml --vault-password-file vault_pass.txt --key-file /4IT572_ansible/ansible/devopss.pem
           rm -f vault_pass.txt
+          EOF
         env:
           VAULT_PASS: ${{ secrets.VAULT_PASS }}
+          ANSIBLE_HOST_KEY_CHECKING: False
