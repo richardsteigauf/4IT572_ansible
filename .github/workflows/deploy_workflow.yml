@@ -10,34 +10,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Decode SSH Key
-      run: |
-        echo "${{ secrets.SSH_KEY }}" | base64 --decode > ssh_key
-        chmod 600 ssh_key
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
 
-    - name: Install Ansible
-      run: pip install ansible
+      - name: Install Ansible
+        run: pip install ansible
 
-
-    - name: SSH and Run Ansible Playbook with Vault
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ec2-user
-        key: ${{ secrets.SSH_KEY }}
-        envs: VAULT_PASS
-        script: |
-          echo $VAULT_PASS > vault_pass.txt
+      - name: Run Ansible Playbook with Vault
+        run: |
+          echo "${{ secrets.VAULT_PASS }}" > vault_pass.txt
           ansible-playbook /4IT572_ansible/ansible/ec2_deploy.yml --vault-password-file vault_pass.txt --key-file /4IT572_ansible/ansible/devopss.pem
           rm -f vault_pass.txt
-      env:
-        VAULT_PASS: ${{ secrets.VAULT_PASS }} 
-
+        env:
+          VAULT_PASS: ${{ secrets.VAULT_PASS }}
