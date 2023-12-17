@@ -5,19 +5,28 @@ on:
     branches:
       - main
 
+
 jobs:
   test-ssh:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Setup SSH
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.SSH_KEY }}
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
 
-    - name: Test SSH Connection
-      run: |
-        ssh -T -o StrictHostKeyChecking=no ec2-user@${{ secrets.HOST }}
+      - name: Create SSH Key File and Check Permissions
+        run: |
+          echo "$SSH_KEY" > ssh_key
+          chmod 600 ssh_key
+          ls -l ssh_key
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+
+      - name: Test SSH Connection
+        run: |
+          ssh -T -o StrictHostKeyChecking=no ec2-user@${{ secrets.HOST }}
