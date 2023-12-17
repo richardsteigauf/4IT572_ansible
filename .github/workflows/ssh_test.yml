@@ -1,4 +1,4 @@
-name: SSH Connectivity Test 
+name: SSH Connectivity Test
 
 on:
   push:
@@ -13,16 +13,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Decode SSH Key
+      - name: Create SSH Key File
         run: |
-          echo "${{ secrets.SSH_KEY }}" | base64 --decode > ssh_key
+          echo "$SSH_KEY" > ssh_key
           chmod 600 ssh_key
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
 
       - name: Test SSH Connection
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ec2-user
-          key: ${{ secrets.SSH_KEY }}
+          key: ./ssh_key
           script: |
             echo "Testing SSH connection"
