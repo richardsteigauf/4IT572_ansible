@@ -10,16 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Decode SSH Key
-        run: |
-          echo "${{ secrets.SSH_KEY }}" | base64 --decode > ssh_key
-          chmod 600 ssh_key
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Test SSH Connection
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ssh_key ec2-user@${{ secrets.HOST }} "echo 'SSH connection successful'"
-        env:
-          SSH_KEY: ${{ secrets.SSH_KEY }}
+    - name: Test SSH Connection
+      run: |
+        ssh -T -o StrictHostKeyChecking=no ec2-user@${{ secrets.HOST }}
