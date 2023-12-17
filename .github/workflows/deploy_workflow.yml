@@ -30,7 +30,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ssh_key ec2-user@${{ secrets.HOST }} << EOF
           echo "${{ secrets.VAULT_PASS }}" > vault_pass.txt
-          ansible-playbook /4IT572_ansible/ansible/ec2_deploy.yml --vault-password-file vault_pass.txt --key-file /4IT572_ansible/ansible/devopss.pem
+          ansible-playbook 4IT572_ansible/ansible/ec2_deploy.yml --vault-password-file vault_pass.txt --key-file 4IT572_ansible/ansible/devopss.pem
           rm -f vault_pass.txt
           EOF
         env:
