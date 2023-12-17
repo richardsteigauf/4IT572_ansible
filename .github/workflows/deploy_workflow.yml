@@ -1,4 +1,4 @@
-name: Deploy EShop on EC2
+name: Deploy E-Shop on EC2
 
 on:
   push:
