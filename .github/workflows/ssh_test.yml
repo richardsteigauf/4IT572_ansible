@@ -13,18 +13,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Create SSH Key File
+      - name: Decode SSH Key
         run: |
-          echo "$SSH_KEY" > ssh_key
+          echo "${{ secrets.SSH_KEY }}" | base64 --decode > ssh_key
           chmod 600 ssh_key
-        env:
-          SSH_KEY: ${{ secrets.SSH_KEY }}
 
       - name: Test SSH Connection
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ec2-user
-          key: ./ssh_key
-          script: |
-            echo "Testing SSH connection"
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ssh_key ec2-user@${{ secrets.HOST }} "echo 'SSH connection successful'"
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
