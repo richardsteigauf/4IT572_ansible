@@ -1,9 +1,8 @@
 name: Deploy E-Shop on EC2
 
 on:
-  push:
-    branches:
-      - main
+  repository_dispatch:
+    types: [trigger-cd]
 
 jobs:
   deploy:
