@@ -26,7 +26,7 @@
         aws_secret_key: "{{ secret_key }}"
         security_token: "{{ session_token }}"
         tags:
-          Name: "YourInstanceName"
+          Name: "Eshop"
           DeploymentTag: "{{ deployment_tag }}"
       register: ec2_instance_result
 
