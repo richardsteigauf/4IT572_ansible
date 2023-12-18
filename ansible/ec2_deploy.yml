@@ -34,6 +34,7 @@
       add_host:
         hostname: "{{ item.network_interfaces[0].association.public_ip }}"
         groupname: launched
+        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
       loop: "{{ ec2_instance_result.instances }}"
       when: "'association' in item.network_interfaces[0] and item.network_interfaces[0].association.public_ip is defined"
 
