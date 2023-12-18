@@ -1,0 +1,25 @@
+name: SSH Connectivity Testt
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-ssh:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Create SSH Key File
+      run: |
+        echo "${{ secrets.SSH_KEY }}" > ssh_key
+        chmod 600 ssh_key
+      shell: bash
+
+    - name: Test SSH Connection
+      run: |
+        ssh -T -o StrictHostKeyChecking=no ec2-user@${{ secrets.HOST }} -i ssh_key
+      shell: bash

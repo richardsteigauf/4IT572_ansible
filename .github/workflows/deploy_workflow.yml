@@ -1,4 +1,4 @@
-name: Deploy EShop on EC2
+name: Deploy E-Shop on EC2
 
 on:
   push:
@@ -10,27 +10,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Decode SSH Key
-      run: |
-        echo "${{ secrets.SSH_KEY }}" | base64 --decode > ssh_key
-        chmod 600 ssh_key
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
 
-    - name: Install Ansible
-      run: pip install ansible
+      - name: Install Ansible
+        run: pip install ansible
 
-    - name: Run Ansible Playbook
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-        ANSIBLE_HOST_KEY_CHECKING: False
-      run: |
-        ansible-playbook 4IT572_ansible/ansible/ec2_deploy.yml -e ansible_ssh_private_key_file=ssh_key --user ec2-user
+      - name: SSH into the instance and run Ansible playbook
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ssh_key ec2-user@${{ secrets.HOST }} << EOF
+          echo "${{ secrets.VAULT_PASS }}" > vault_pass.txt
+          ansible-playbook 4IT572_ansible/ansible/ec2_deploy.yml --vault-password-file vault_pass.txt --key-file 4IT572_ansible/ansible/devopss.pem
+          rm -f vault_pass.txt
+          EOF
+        env:
+          VAULT_PASS: ${{ secrets.VAULT_PASS }}
+          ANSIBLE_HOST_KEY_CHECKING: False
